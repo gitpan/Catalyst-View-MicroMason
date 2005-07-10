@@ -1,4 +1,7 @@
 Revision history for Perl extension Catalyst::View::MicroMason
 
+0.02  Sat Jul 09 18:43:14 2005
+        - $c, $name and $base now are globals
+
 0.01  Jul Fri 08 12:00:00 2005
         - original version.

@@ -11,7 +11,7 @@ SYNOPSIS
         use base 'Catalyst::View::MicroMason';
 
         __PACKAGE__->config(
-            workdir => '/tmp/psp'
+            template_root => '/path/to/comp_root'
         );
 
         1;
@@ -33,7 +33,7 @@ DESCRIPTION
 
     config
         This allows your view subclass to pass additional settings to the
-        Petal config hash.
+        MicroMasonl config hash.
 
 SEE ALSO
     Text::MicroMason, Catalyst, Catalyst::Base.

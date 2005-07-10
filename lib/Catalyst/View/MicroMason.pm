@@ -5,7 +5,7 @@ use base qw/Catalyst::Base/;
 use Text::MicroMason;
 use NEXT;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 __PACKAGE__->mk_accessors('template');
 
@@ -23,8 +23,10 @@ Catalyst::View::MicroMason - MicroMason View Class
 
     use base 'Catalyst::View::MicroMason';
 
-    __PACKAGE__->config->{Mixins} = [ qw( -TemplateDir ) ];
-    __PACKAGE__->config->{template_root} = '/servers/sites/MiniMojo/root';
+    __PACKAGE__->config(
+        Mixins        => [qw( -Filters )], # to use |h and |u
+        template_root => '/path/to/comp_root'
+    );
 
 
     1;
@@ -53,11 +55,12 @@ sub new {
     $self = $self->NEXT::new(@_);
     my $root = $c->config->{root};
     my @Mixins  = @{ $self->config->{Mixins} || [] };
-    push @Mixins, '-TemplateDir'
-      unless grep { $_ eq '-TemplateDir' } @Mixins;
+    push @Mixins, qw(-TemplateDir -AllowGlobals);
     my %attribs = %{ $self->config };
     $self->template( Text::MicroMason->new( @Mixins,
-       template_root => "$root", %attribs ) );
+       template_root => "$root",
+       #allow_globals => [qw($c $base $name)], 
+       %attribs ) );
     return $self;
 }
 
@@ -69,7 +72,7 @@ to $c->response->output.
 Note that the component name must be absolute, or is converted to absolute
 (ie, a / is added to the beginning if it doesn't start with one)
 
-MicroMason argument variables C<$base>, C<$c> and c<$name> are automatically set to the base, context and name of the app, respectively.
+MicroMason global variables C<$base>, C<$c> and c<$name> are automatically set to the base, context and name of the app, respectively.
 
 =cut
 
@@ -85,13 +88,18 @@ sub process {
     $component_path = '/' . $component_path if ( $component_path !~ m[^/]o );
     $c->log->debug(qq/Rendering component "$component_path"/) if $c->debug;
 
+    # Set the URL base, context and name of the app as global Mason vars
+    # $base, $c and $name
+    $self->template->set_globals(
+        '$base' => $c->req->base,
+        '$c'    => $c,
+        '$name' => $c->config->{name}
+    );
+
     my $output = eval {
         $self->template->execute(
             file => $component_path,
             %{ $c->stash },    # pass the stash
-            base => $c->req->base,
-            c    => $c,
-            name => $c->config->{name},
         );
     };
 

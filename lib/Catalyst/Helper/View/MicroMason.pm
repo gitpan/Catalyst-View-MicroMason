@@ -52,6 +52,10 @@ package [% class %];
 use strict;
 use base 'Catalyst::View::MicroMason';
 
+__PACKAGE__->config(
+    Mixins => [qw( -Filters )], # to use |h and |u
+);
+    
 =head1 NAME
 
 [% class %] - MicroMason View Component
