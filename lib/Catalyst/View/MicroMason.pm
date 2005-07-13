@@ -5,7 +5,7 @@ use base qw/Catalyst::Base/;
 use Text::MicroMason;
 use NEXT;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 __PACKAGE__->mk_accessors('template');
 
@@ -24,7 +24,10 @@ Catalyst::View::MicroMason - MicroMason View Class
     use base 'Catalyst::View::MicroMason';
 
     __PACKAGE__->config(
-        Mixins        => [qw( -Filters )], # to use |h and |u
+        # -Filters      : to use |h and |u
+        # -ExecuteCache : to cache template output
+        # -CompileCache : to cache the templates
+        Mixins        => [qw( -Filters -CompileCache )], 
         template_root => '/path/to/comp_root'
     );
 

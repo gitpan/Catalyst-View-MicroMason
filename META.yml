@@ -1,8 +1,8 @@
 ---
 name: Catalyst-View-MicroMason
-version: 0.02
+version: 0.03
 author:
-  - Jonas Alves, C<jgda@cpan.org>
+  - Jonas Alves C<jgda@cpan.org>
 abstract: MicroMason View Class
 license: perl
 requires:
@@ -13,5 +13,5 @@ provides:
     file: lib/Catalyst/Helper/View/MicroMason.pm
   Catalyst::View::MicroMason:
     file: lib/Catalyst/View/MicroMason.pm
-    version: 0.02
-generated_by: Module::Build version 0.26
+    version: 0.03
+generated_by: Module::Build version 0.2611

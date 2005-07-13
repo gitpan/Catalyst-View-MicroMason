@@ -11,6 +11,10 @@ SYNOPSIS
         use base 'Catalyst::View::MicroMason';
 
         __PACKAGE__->config(
+            # -Filters      : to use |h and |u
+            # -ExecuteCache : to cache template output
+            # -CompileCache : to cache the templates
+            Mixins => [qw( -Filters -CompileCache )], 
             template_root => '/path/to/comp_root'
         );
 
