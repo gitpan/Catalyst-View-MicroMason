@@ -1,6 +1,7 @@
 package Catalyst::Helper::View::MicroMason;
 
 use strict;
+our $VERSION = '0.04_01';
 
 =head1 NAME
 
@@ -35,6 +36,12 @@ L<Catalyst::Response>, L<Catalyst::Helper>
 
 Jonas Alves, C<jgda@cpan.org>
 
+=head1 MAINTAINER
+
+The Catalyst Core Team L<http://www.catalystframework.org/>
+
+Jonathan Rockway C<< <jrockway@cpan.org> >>
+
 =head1 LICENSE
 
 This library is free software . You can redistribute it and/or modify it under
@@ -65,21 +72,20 @@ __PACKAGE__->config(
 
 =head1 SYNOPSIS
 
-    Very simple to use
+In your end action:
+
+    $c->forward('[% class %]');
 
 =head1 DESCRIPTION
 
-Very nice component.
+A description of how to use your view, if you're deviating from the
+default behavior.
 
 =head1 AUTHOR
 
-Clever guy
 
 =head1 LICENSE
 
-This library is free software . You can redistribute it and/or modify it under
-the same terms as perl itself.
-
 =cut
 
-1;
+1; # magic true value

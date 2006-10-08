@@ -1,4 +1,8 @@
 Revision history for Perl extension Catalyst::View::MicroMason
+0.04  Sat Oct  7 07:16:55 CDT 2006
+        - Works more like C::V::TT now, with process/render
+        - Accepts config properly (via a config file)
+        - Added a simple test
 
 0.03  Tue Jul 12 20:16:31 2005
         - Fixed the typo in the Build.PL 'requires' parameter

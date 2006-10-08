@@ -1,7 +1,7 @@
 Build.PL
 Changes
-lib/Catalyst/View/MicroMason.pm
 lib/Catalyst/Helper/View/MicroMason.pm
+lib/Catalyst/View/MicroMason.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
@@ -9,3 +9,9 @@ README
 t/01use.t
 t/02pod.t
 t/03podcoverage.t
+t/lib/TestApp.pm
+t/lib/TestApp/Controller/Root.pm
+t/lib/TestApp/View/MicroMason.pm
+t/live.t
+t/root/default
+t/root/foo
