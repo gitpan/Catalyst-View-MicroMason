@@ -19,4 +19,11 @@ sub foo : Global('foo') {
     $c->forward('TestApp::View::MicroMason');    
 }
 
+sub bar : Global('bar') {
+    my ($self, $c, @args) = @_;
+    $c->view->template('foo');
+    $c->stash->{foo} = 'this is bar';
+    $c->detach('TestApp::View::MicroMason');    
+}
+
 1;

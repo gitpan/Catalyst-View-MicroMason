@@ -1,7 +1,6 @@
 package Catalyst::Helper::View::MicroMason;
 
 use strict;
-our $VERSION = '0.04_01';
 
 =head1 NAME
 

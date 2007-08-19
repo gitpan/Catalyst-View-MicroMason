@@ -1,12 +1,12 @@
-use strict;
-use Module::Build;
+use inc::Module::Install;
 
-my $build = Module::Build->new(
-    create_makefile_pl => 'passthrough',
-    license            => 'perl',
-    module_name        => 'Catalyst::View::MicroMason',
-    requires           => { Catalyst => 5.7, 'Text::MicroMason' => 1.99 },
-    create_makefile_pl => 'passthrough',
-    test_files         => [ glob('t/*.t') ]
-);
-$build->create_build_script;
+name('Catalyst-View-MicroMason');
+all_from('lib/Catalyst/View/MicroMason.pm');
+
+requires 'Catalyst::View::Templated';
+requires 'Text::MicroMason';
+
+build_requires 'Catalyst::Runtime' => 5.7;
+build_requires 'Test::More';
+
+WriteAll();

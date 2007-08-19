@@ -1,13 +1,14 @@
 package Catalyst::View::MicroMason;
 
 use strict;
-use base qw/Catalyst::View Class::Accessor/;
+use base qw/Catalyst::View::Templated Class::Accessor/;
 use Text::MicroMason;
-use NEXT;
+use Class::C3;
 
-our $VERSION = '0.04_01';
+our $VERSION = '0.05';
 
-__PACKAGE__->mk_accessors(qw(template Mixins template_root));
+# template_root is the old way of saying INCLUDE_PATH.  don't use it.
+__PACKAGE__->mk_accessors(qw(_template Mixins template_root));
 
 =head1 NAME
 
@@ -15,56 +16,76 @@ Catalyst::View::MicroMason - MicroMason View Class
 
 =head1 SYNOPSIS
 
-    # use the helper
+Use the helper:
+
     script/create.pl view MicroMason MicroMason
+
+To create a simple View subclass:
 
     # lib/MyApp/View/MicroMason.pm
     package MyApp::View::MicroMason;
-
     use base 'Catalyst::View::MicroMason';
+    1;
 
-    __PACKAGE__->config(
+And configure it in your app's config:
+
+    MyApp->config->{View::MicroMason} = {
         # -Filters      : to use |h and |u
         # -ExecuteCache : to cache template output
         # -CompileCache : to cache the templates
         Mixins        => [qw( -Filters -CompileCache )], 
-        template_root => '/path/to/comp_root'
-    );
-
-    1;
+        INCLUDE_PATH  => '/path/to/comp_root'
+    };
     
-    # In an 'end' action
+In an 'end' action:
+
+    $c->view('MicroMason')->template('foo.mc');
     $c->forward('MyApp::View::MicroMason');
+
+Or perhaps:
+
+    my $output = $c->view('MicroMason')->render('foo.mc');
 
 =head1 DESCRIPTION
 
 Want to use a MicroMason component in your views? No problem!
 Catalyst::View::MicroMason comes to the rescue.
 
-=head1 CAVEATS
-
-You have to define C<template_root>.  If C<template_root> is not directly
-defined within C<config>, the value comes from C<config->{root}>. If you don't
-define it at all, MicroMason is going to use the root of your system.
-
 =head1 METHODS
+
+=head2 new
+
+Create an instance; should be called from C<COMPONENT>, not by you.
 
 =cut
 
 sub new {
-    my ($self, $c) = @_;
+    my ($self, $c, $args) = @_;
     shift;
-    
-    $self = $self->NEXT::new(@_);
-    my $root = $self->template_root || $c->config->{root};
 
+    my $real_include = $args->{INCLUDE_PATH};
+    
+    $self = $self->next::method(@_);
+    
+    my $root = $real_include || 
+               $self->template_root || 
+               $c->config->{root};
+
+    if (ref $root eq 'ARRAY' && @$root > 1) {
+        die "Catalyst::View::MicroMason only supports one entry in ".
+          "the INCLUDE_PATH or template_root.";
+    }
+    
+    $root = $root->[0] if ref $root;
+    $self->template_root($root);
+    
     my @Mixins  = @{ $self->Mixins || [] };
     push @Mixins, qw(-TemplateDir -AllowGlobals); 
-    $self->template(Text::MicroMason->new(@Mixins, 
+    $self->_template(Text::MicroMason->new(@Mixins, 
 					  template_root => $root,
 					  %$self
 					 )
-		   );
+                    );
     
     return $self;
 }
@@ -72,71 +93,57 @@ sub new {
 =head2 process
 
 Renders the component specified in $c->stash->{template} or by the
-value $c->action (if $c->stash->{template} is undefined).
+value $c->action (if $c->stash->{template} is undefined).  See
+L<Catalyst::View::Templated> for all the details.
 
-MicroMason global variables C<$base>, C<$c> and c<$name> are
-automatically set to the base, context and name of the app,
-respectively.
+MicroMason global variables C<$base>, C<$c> (or whatever you pass in
+at config time as CATALYST_VAR) and c<$name> are automatically set to the base,
+context and name of the app, respectively.
 
 An exception is thrown if processing fails, otherwise the output is stored
 in C<< $c->response->body >>.
 
-=cut
+=head2 render([$template])
 
-sub process {
-    my ( $self, $c ) = @_;
-    
-    $c->response->headers->content_type('text/html;charset=utf8')
-      unless $c->response->content_type;
-    
-    $c->res->body( $self->render($c) );
-    return 1;
-}
+Renders the given template and returns output.  
 
-=head2 render($c, [$template])
-
-Renders the given template and returns output.  Throws an exception on
-error.  If $template is not defined, the value of "template" from the
-stash is used instead.
+Throws an exception on error.  If C<$template> is not defined, it is
+determined by calling C<< $self->template >>.  See
+L<Catalyst::View::Templated> for details.
 
 =cut
 
-sub render {
-    my ($self, $c, $component_path) = @_;
-    $component_path ||= $c->stash->{template} || $c->action;
+sub _render {
+    my ($self, $template, $stash, $args) = @_;
+
+    my $c_name = '$'. $self->{CATALYST_VAR};
     
     # Set the URL base, context and name of the app as global Mason vars
     # $base, $c and $name
-    $self->template->set_globals(
-				 '$base' => $c->req->base,
-				 '$c'    => $c,
-				 '$name' => $c->config->{name}
-				);
+    $self->_template->set_globals( '$base' => $self->context->req->base,
+                                   $c_name => $self->context,
+                                   '$name' => $self->context->config->{name},
+                                 );
     
-    # render it
-    my $output = eval {
-        $self->template->execute(file => $component_path, %{$c->stash});
-    };
+    delete $stash->{$self->{CATALYST_VAR}};
+    delete $stash->{base};
+    delete $stash->{name};
+
+    warn "MicroMason: using a stash key called 'file' sets the template" 
+      if exists $stash->{file};
     
-    # errors?
-    if (my $error = $@ ) {
-        chomp $error;
-        $error =
-          qq/Couldn't render component "$component_path" - error was "$error"/;
-        $c->error($error);
-    }
-    
-    return $output;
+    return $self->_template->execute(file => $template, %$stash);
 }
 
 
 =head1 SEE ALSO
 
-L<Catalyst>, L<Text::MicroMason>, L<Catalyst::View::Mason>
+L<Catalyst>, L<Catalyst::View::Templated>, L<Text::MicroMason>,
+L<Catalyst::View::Mason>
 
 =head1 AUTHOR
 
-Jonas Alves C<jgda@cpan.org>
+Jonas Alves C<< <jgda@cpan.org> >>
 
 =head1 MAINTAINER
 
